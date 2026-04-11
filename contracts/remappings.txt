@@ -1,0 +1,4 @@
+forge-std/=lib/forge-std/src/
+@iexec-nox/=../node_modules/@iexec-nox/
+@openzeppelin/=../node_modules/@openzeppelin/
+encrypted-types/=../node_modules/.pnpm/encrypted-types@0.0.4/node_modules/encrypted-types/
