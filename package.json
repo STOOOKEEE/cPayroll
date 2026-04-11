@@ -1,0 +1,27 @@
+{
+  "name": "cpayroll",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Confidential payroll dApp on iExec Nox + ERC-7984",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "test": "cd contracts && forge test",
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "cd contracts && forge test -vvv",
+    "deploy:sepolia": "cd contracts && forge script script/Deploy.s.sol --rpc-url $ARB_SEPOLIA_RPC --broadcast --verify",
+    "gen-abi": "tsx scripts/gen-abi.ts",
+    "audit": "tsx scripts/chaingpt-audit.ts",
+    "chaingpt:audit": "tsx scripts/chaingpt-audit.ts"
+  },
+  "dependencies": {
+    "@iexec-nox/nox-confidential-contracts": "0.1.0-beta.2",
+    "@iexec-nox/nox-protocol-contracts": "0.1.0-beta.9",
+    "@openzeppelin/contracts": "^5.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
