@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useAccount, usePublicClient, useReadContract, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  usePublicClient,
+  useReadContract,
+  useWalletClient,
+  useWriteContract,
+} from "wagmi";
 import { ConnectButton } from "@/components/connect-button";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
@@ -15,15 +21,19 @@ import {
   arbiscanTx,
   formatTimestamp,
   formatUsdc,
+  parseUsdc,
   truncateAddress,
   truncateHandle,
 } from "@/lib/format";
+import { encryptAmount } from "@/lib/nox";
 
 type Employee = { addr: `0x${string}`; lastPaid: bigint };
+type WithdrawPhase = "idle" | "encrypting" | "submitting" | "pending";
 
 export default function EmployerDashboard() {
   const { address: account, isConnected } = useAccount();
   const publicClient = usePublicClient();
+  const { data: walletClient } = useWalletClient();
   const { writeContractAsync, isPending } = useWriteContract();
   const [txHash, setTxHash] = useState<`0x${string}` | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +42,9 @@ export default function EmployerDashboard() {
   const [auditReport, setAuditReport] = useState<AuditReportView | null>(null);
   const [auditOpen, setAuditOpen] = useState(false);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawPhase, setWithdrawPhase] = useState<WithdrawPhase>("idle");
+  const [withdrawTx, setWithdrawTx] = useState<`0x${string}` | null>(null);
 
   async function onAudit() {
     setError(null);
@@ -77,6 +90,13 @@ export default function EmployerDashboard() {
     address: deployed ? addresses.payroll : undefined,
     abi: payrollAbi,
     functionName: "employeeCount",
+    query: { enabled: deployed },
+  });
+
+  const withdrawPending = useReadContract({
+    address: deployed ? addresses.payroll : undefined,
+    abi: payrollAbi,
+    functionName: "withdrawPending",
     query: { enabled: deployed },
   });
 
@@ -144,6 +164,67 @@ export default function EmployerDashboard() {
     }
   }
 
+  async function onWithdraw(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setWithdrawTx(null);
+
+    if (!walletClient) {
+      setError("Wallet not ready");
+      return;
+    }
+
+    let amountBig: bigint;
+    try {
+      amountBig = parseUsdc(withdrawAmount);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      return;
+    }
+
+    try {
+      setWithdrawPhase("encrypting");
+      const { handle, handleProof } = await encryptAmount(
+        walletClient,
+        amountBig,
+        addresses.payroll
+      );
+      setWithdrawAmount("");
+      amountBig = 0n;
+
+      setWithdrawPhase("submitting");
+      const hash = await writeContractAsync({
+        address: addresses.payroll,
+        abi: payrollAbi,
+        functionName: "withdrawUnderlying",
+        args: [handle, handleProof],
+      });
+      setWithdrawTx(hash);
+      setWithdrawPhase("pending");
+      withdrawPending.refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setWithdrawPhase("idle");
+    }
+  }
+
+  async function onClearPending() {
+    setError(null);
+    setTxHash(null);
+    try {
+      const hash = await writeContractAsync({
+        address: addresses.payroll,
+        abi: payrollAbi,
+        functionName: "clearWithdrawPending",
+      });
+      setTxHash(hash);
+      setWithdrawPhase("idle");
+      withdrawPending.refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return (
     <main className="p-8 space-y-6 max-w-5xl mx-auto">
       <header className="flex items-center justify-between">
@@ -164,6 +245,12 @@ export default function EmployerDashboard() {
       )}
 
       {!isConnected && <Banner tone="info">Connect a wallet to interact.</Banner>}
+
+      {withdrawPending.data === true && (
+        <Banner tone="warning">
+          Treasury unwrap in flight — payroll is locked until you clear the pending flag.
+        </Banner>
+      )}
 
       <Card>
         <CardTitle>Treasury</CardTitle>
@@ -265,6 +352,73 @@ export default function EmployerDashboard() {
           </p>
         )}
         {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+      </Card>
+
+      <Card>
+        <CardTitle>Emergency withdraw (cUSDC → USDC)</CardTitle>
+        <p className="text-sm text-neutral-400 mb-3">
+          Encrypted unwrap routed to the owner wallet. Locks payroll until the Nox TEE
+          finalizes off-chain — then call <span className="font-mono">clearWithdrawPending</span>.
+        </p>
+        <form onSubmit={onWithdraw} className="space-y-3">
+          <div>
+            <label className="block text-sm text-neutral-400 mb-1">
+              Amount (USDC, encrypted on submit)
+            </label>
+            <input
+              className="w-full rounded-md bg-neutral-900 border border-neutral-800 px-3 py-2 font-mono text-sm"
+              value={withdrawAmount}
+              onChange={(ev) => setWithdrawAmount(ev.target.value)}
+              placeholder="100"
+              inputMode="decimal"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button
+              type="submit"
+              variant="danger"
+              disabled={
+                !deployed ||
+                !isConnected ||
+                withdrawPhase === "encrypting" ||
+                withdrawPhase === "submitting" ||
+                withdrawPending.data === true
+              }
+            >
+              {withdrawPhase === "encrypting"
+                ? "Encrypting…"
+                : withdrawPhase === "submitting"
+                  ? "Submitting…"
+                  : "Request withdraw"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClearPending}
+              disabled={!deployed || !isConnected || withdrawPending.data !== true}
+            >
+              Clear pending
+            </Button>
+          </div>
+        </form>
+        {withdrawPhase === "pending" && (
+          <p className="mt-3 text-sm text-amber-400">
+            Unwrap requested. Waiting on Nox TEE finalization off-chain.
+          </p>
+        )}
+        {withdrawTx && (
+          <p className="mt-3 text-sm">
+            Tx:{" "}
+            <a
+              className="underline font-mono"
+              href={arbiscanTx(withdrawTx)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {truncateHandle(withdrawTx)}
+            </a>
+          </p>
+        )}
       </Card>
 
       {account && (
