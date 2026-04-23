@@ -1,12 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAccount, useReadContract, useWalletClient, useWriteContract } from "wagmi";
-import { ConnectButton } from "@/components/connect-button";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { addresses, cUSDCAbi, isDeployed, usdcAbi } from "@/lib/contracts";
 import { arbiscanTx, formatUsdc, parseUsdc, truncateHandle } from "@/lib/format";
 import { decryptBalance, encryptAmount } from "@/lib/nox";
@@ -18,8 +16,8 @@ export default function EmployeeView() {
   const { data: walletClient } = useWalletClient();
   const { writeContractAsync } = useWriteContract();
   const [decrypted, setDecrypted] = useState<bigint | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [revealing, setRevealing] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const [unwrapAmount, setUnwrapAmount] = useState("");
   const [unwrapPhase, setUnwrapPhase] = useState<UnwrapPhase>("idle");
@@ -43,46 +41,40 @@ export default function EmployeeView() {
     query: { enabled: deployed && !!address },
   });
 
-  // Trust model: clear decrypted plaintext on unmount.
-  useEffect(() => {
-    return () => setDecrypted(null);
-  }, []);
+  useEffect(() => () => setDecrypted(null), []);
 
   async function onReveal() {
-    setError(null);
+    setErr(null);
     if (!walletClient || !handleQuery.data) {
-      setError("Wallet or handle not ready");
+      setErr("WALLET_OR_HANDLE_NOT_READY");
       return;
     }
-    setBusy(true);
+    setRevealing(true);
     try {
       const value = await decryptBalance(walletClient, handleQuery.data as `0x${string}`);
       setDecrypted(value);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
     } finally {
-      setBusy(false);
+      setRevealing(false);
     }
   }
 
   async function onUnwrap(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
+    setErr(null);
     setUnwrapTx(null);
-
     if (!walletClient || !address) {
-      setError("Wallet not ready");
+      setErr("WALLET_NOT_READY");
       return;
     }
-
     let amountBig: bigint;
     try {
       amountBig = parseUsdc(unwrapAmount);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
       return;
     }
-
     try {
       setUnwrapPhase("encrypting");
       const { handle, handleProof } = await encryptAmount(
@@ -90,10 +82,8 @@ export default function EmployeeView() {
         amountBig,
         addresses.cUSDC
       );
-      // Clear plaintext input immediately after encryption.
       setUnwrapAmount("");
       amountBig = 0n;
-
       setUnwrapPhase("submitting");
       const hash = await writeContractAsync({
         address: addresses.cUSDC,
@@ -103,75 +93,75 @@ export default function EmployeeView() {
       });
       setUnwrapTx(hash);
       setUnwrapPhase("pending");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
       setUnwrapPhase("idle");
     }
   }
 
-  function onRefresh() {
-    setDecrypted(null);
-    handleQuery.refetch();
-    usdcBalance.refetch();
-  }
-
   return (
-    <main className="p-8 space-y-6 max-w-2xl mx-auto">
-      <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Employee view</h1>
-        <ConnectButton />
-      </header>
-      <Link className="text-sm underline" href="/">← Home</Link>
-
-      {!deployed && <Banner tone="warning">Contracts not deployed yet.</Banner>}
-      {!isConnected && <Banner tone="info">Connect your wallet.</Banner>}
-
-      <Card>
-        <CardTitle>Encrypted balance handle</CardTitle>
-        <p className="font-mono text-sm break-all">
-          {handleQuery.data ? truncateHandle(handleQuery.data as string) : "—"}
+    <div className="p-8 space-y-6 max-w-3xl mx-auto">
+      <header>
+        <h1 className="text-[20px] uppercase tracking-wider2 text-fg font-medium">
+          EMPLOYEE_TERMINAL
+        </h1>
+        <p className="label-mono mt-1">
+          DECRYPT_SALARY_LOCALLY • UNWRAP_TO_USDC
         </p>
-        <div className="flex gap-3 mt-4">
-          <Button onClick={onReveal} disabled={!isConnected || busy || !handleQuery.data}>
-            {busy ? "Decrypting…" : "Reveal my balance"}
+      </header>
+
+      {!deployed && <Banner tone="warning">CONTRACTS_NOT_DEPLOYED</Banner>}
+      {!isConnected && <Banner tone="info">CONNECT_WALLET_TO_CONTINUE</Banner>}
+
+      <Card label="ENCRYPTED_BALANCE">
+        <div className="text-accent text-[13px] font-mono break-all">
+          {handleQuery.data ? truncateHandle(handleQuery.data as string).toUpperCase() : "—"}
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button
+            onClick={onReveal}
+            disabled={!isConnected || revealing || !handleQuery.data}
+          >
+            {revealing ? "DECRYPTING…" : "REVEAL_LOCALLY"}
           </Button>
-          <Button variant="secondary" onClick={onRefresh}>
-            Refresh
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setDecrypted(null);
+              handleQuery.refetch();
+              usdcBalance.refetch();
+            }}
+          >
+            REFRESH
           </Button>
         </div>
       </Card>
 
       {decrypted !== null && (
-        <Card>
-          <CardTitle>Private balance (visible only to you)</CardTitle>
-          <p className="font-mono text-2xl">{formatUsdc(decrypted)} cUSDC</p>
-          <p className="text-xs text-neutral-500 mt-2">
-            Held in this browser tab only. Cleared on navigation.
-          </p>
+        <Card label="PRIVATE_BALANCE — VIEW_KEY_SELF">
+          <div className="text-[32px] font-medium tabular-nums">
+            {formatUsdc(decrypted)}
+          </div>
+          <div className="label-mono">CUSDC • BROWSER_TAB_ONLY</div>
         </Card>
       )}
 
-      <Card>
-        <CardTitle>Unwrap cUSDC → USDC</CardTitle>
-        <p className="text-sm text-neutral-400 mb-3">
-          Burn confidential cUSDC and receive plain USDC. Finalization runs in the Nox TEE
-          off-chain — plain USDC arrives in your wallet once the TEE decrypts and posts the
-          result.
+      <Card label="UNWRAP_CUSDC_TO_USDC">
+        <p className="label-mono mb-4">
+          BURN_CONFIDENTIAL • TEE_FINALIZES_OFF_CHAIN
         </p>
         <form onSubmit={onUnwrap} className="space-y-3">
           <div>
-            <label className="block text-sm text-neutral-400 mb-1">
-              Amount (USDC, encrypted on submit)
-            </label>
+            <label className="label-mono block mb-2">AMOUNT_USDC</label>
             <input
-              className="w-full rounded-md bg-neutral-900 border border-neutral-800 px-3 py-2 font-mono text-sm"
+              className="w-full bg-bg border border-border px-3 py-2 font-mono text-[12px] focus:outline-none focus:border-accent"
               value={unwrapAmount}
-              onChange={(ev) => setUnwrapAmount(ev.target.value)}
+              onChange={(e) => setUnwrapAmount(e.target.value)}
               placeholder="100"
               inputMode="decimal"
             />
-            <p className="text-xs text-neutral-500 mt-1">
-              Cleared from memory immediately after encryption.
+            <p className="label-mono-fade mt-2">
+              CLEARED_FROM_MEMORY_AFTER_ENCRYPTION
             </p>
           </div>
           <Button
@@ -184,45 +174,41 @@ export default function EmployeeView() {
             }
           >
             {unwrapPhase === "encrypting"
-              ? "Encrypting…"
+              ? "ENCRYPTING…"
               : unwrapPhase === "submitting"
-                ? "Submitting…"
+                ? "SUBMITTING…"
                 : unwrapPhase === "pending"
-                  ? "Request a new unwrap"
-                  : "Unwrap"}
+                  ? "REQUEST_NEW_UNWRAP"
+                  : "UNWRAP_SALARY"}
           </Button>
         </form>
         {unwrapPhase === "pending" && (
-          <p className="mt-3 text-sm text-amber-400">
-            Unwrap requested. The Nox TEE will finalize it asynchronously — plain USDC
-            will land in your wallet shortly.
+          <p className="mt-3 label-mono text-accent">
+            &gt; UNWRAP_REQUESTED — USDC_ARRIVES_POST_TEE_FINALIZATION
           </p>
         )}
         {unwrapTx && (
-          <p className="mt-3 text-sm">
-            Tx:{" "}
-            <a
-              className="underline font-mono"
-              href={arbiscanTx(unwrapTx)}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {truncateHandle(unwrapTx)}
-            </a>
-          </p>
+          <a
+            href={arbiscanTx(unwrapTx)}
+            target="_blank"
+            rel="noreferrer"
+            className="block mt-2 label-mono hover:text-fg truncate"
+          >
+            &gt; TX: {truncateHandle(unwrapTx)}
+          </a>
         )}
       </Card>
 
-      <Card>
-        <CardTitle>Plain USDC in your wallet</CardTitle>
-        <p className="font-mono text-lg">
+      <Card label="USDC_WALLET_BALANCE_UNENCRYPTED">
+        <div className="text-[22px] font-mono tabular-nums">
           {usdcBalance.data !== undefined
-            ? `${formatUsdc(usdcBalance.data as bigint)} USDC`
+            ? formatUsdc(usdcBalance.data as bigint)
             : "—"}
-        </p>
+        </div>
+        <div className="label-mono">USDC</div>
       </Card>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
-    </main>
+      {err && <p className="label-mono text-accent break-all">! {err}</p>}
+    </div>
   );
 }

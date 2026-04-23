@@ -11,6 +11,7 @@ const tabs: { href: Route; label: string }[] = [
   { href: "/team" as Route, label: "TEAM" },
   { href: "/treasury" as Route, label: "TREASURY" },
   { href: "/history" as Route, label: "HISTORY" },
+  { href: "/employee" as Route, label: "EMPLOYEE" },
 ];
 
 function Brand() {
