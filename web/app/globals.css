@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
 body {
-  @apply bg-neutral-950 text-neutral-100;
+  @apply bg-bg text-fg font-mono;
+  font-feature-settings: "ss01", "zero";
+}
+
+body {
+  letter-spacing: 0.02em;
+}
+
+/* Terminal-style scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000;
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+@layer components {
+  .label-mono {
+    @apply text-[10px] uppercase tracking-wider2 text-dim;
+  }
+  .label-mono-fade {
+    @apply text-[10px] uppercase tracking-wider2 text-fade;
+  }
+  .label-mono-fg {
+    @apply text-[10px] uppercase tracking-wider2 text-fg;
+  }
+  .hex {
+    @apply font-mono uppercase text-fg;
+  }
+  .redacted {
+    @apply inline-block bg-redact h-3 align-middle;
+  }
 }
