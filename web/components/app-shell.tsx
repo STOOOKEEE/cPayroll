@@ -89,49 +89,12 @@ function TabBar() {
   );
 }
 
-function SideRail() {
-  return (
-    <aside className="w-12 border-r border-border flex flex-col items-center py-4 gap-6 text-dim">
-      <button className="hover:text-fg" aria-label="edit">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-          <path d="M2 14h12M10 2l4 4-8 8H2v-4z" />
-        </svg>
-      </button>
-      <button className="hover:text-fg" aria-label="explore">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-          <circle cx="8" cy="8" r="6" />
-          <path d="M11 5L9 9l-4 2 2-4z" fill="currentColor" />
-        </svg>
-      </button>
-      <button className="hover:text-fg" aria-label="files">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor">
-          <path d="M2 4h4l2 2h6v8H2z" />
-        </svg>
-      </button>
-      <button className="hover:text-fg" aria-label="bookmarks">
-        <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor">
-          <path d="M2 1h10v14l-5-3-5 3z" />
-        </svg>
-      </button>
-      <div className="flex-1" />
-      <div
-        className="w-6 h-6 border border-border"
-        title="status"
-        aria-hidden
-      />
-    </aside>
-  );
-}
-
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <TopBar />
       <TabBar />
-      <div className="flex">
-        <SideRail />
-        <main className="flex-1 min-h-[calc(100vh-104px)]">{children}</main>
-      </div>
+      <main className="min-h-[calc(100vh-104px)]">{children}</main>
     </div>
   );
 }
