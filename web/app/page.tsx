@@ -1,19 +1,28 @@
-import Link from "next/link";
-import { ConnectButton } from "@/components/connect-button";
+import { TreasuryCard } from "@/components/dashboard/treasury-card";
+import { PayrollRunCard } from "@/components/dashboard/payroll-run-card";
+import { SystemLogs } from "@/components/dashboard/system-logs";
+import { ActivePersonnel } from "@/components/dashboard/active-personnel";
+import { EmployeePreview } from "@/components/dashboard/employee-preview";
 
-export default function Home() {
+export default function Dashboard() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-8 p-8">
-      <h1 className="text-5xl font-bold tracking-tight">cPayroll</h1>
-      <p className="text-neutral-400 max-w-xl text-center">
-        Confidential on-chain payroll for DAOs. Salaries encrypted via ERC-7984 on iExec Nox,
-        settled on Arbitrum Sepolia.
-      </p>
-      <ConnectButton />
-      <div className="flex gap-4 text-sm">
-        <Link className="underline" href="/employer">Employer dashboard</Link>
-        <Link className="underline" href="/employee">Employee view</Link>
-      </div>
-    </main>
+    <div className="grid grid-cols-12 min-h-[calc(100vh-104px)]">
+      <section className="col-span-3 border-r border-border py-6 space-y-6">
+        <div className="px-5">
+          <div className="label-mono-fade mb-3">TREASURY_OVERVIEW</div>
+        </div>
+        <div className="px-5"><TreasuryCard /></div>
+        <div className="px-5"><PayrollRunCard /></div>
+        <SystemLogs />
+      </section>
+
+      <section className="col-span-6 py-6">
+        <ActivePersonnel />
+      </section>
+
+      <section className="col-span-3 border-l border-border py-6">
+        <EmployeePreview />
+      </section>
+    </div>
   );
 }
