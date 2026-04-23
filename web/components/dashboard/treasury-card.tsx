@@ -5,6 +5,10 @@ import { Card } from "@/components/ui/card";
 import { addresses, isDeployed, usdcAbi } from "@/lib/contracts";
 import { formatUsdc } from "@/lib/format";
 
+function formatWithThousands(whole: string): string {
+  return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 export function TreasuryCard() {
   const deployed = isDeployed();
   const treasury = useReadContract({
@@ -16,18 +20,20 @@ export function TreasuryCard() {
   });
 
   const value = treasury.data as bigint | undefined;
+  const [whole, frac] =
+    value !== undefined ? formatUsdc(value).split(".") : ["—", "00"];
 
   return (
     <Card label="TOTAL_BALANCE">
       <div className="space-y-1">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[28px] font-medium text-fg leading-tight">
-            {value !== undefined ? formatUsdc(value).split(".")[0] : "—"}
-          </span>
-          <span className="text-[13px] text-dim">
-            .{value !== undefined ? formatUsdc(value).split(".")[1].slice(0, 2) : "00"}
-          </span>
-          <span className="label-mono ml-1">USDC</span>
+        <div className="flex items-baseline gap-3">
+          <div className="flex items-baseline leading-tight">
+            <span className="text-[28px] font-medium text-fg">
+              {value !== undefined ? formatWithThousands(whole) : "—"}
+            </span>
+            <span className="text-[13px] text-dim">.{frac.slice(0, 2)}</span>
+          </div>
+          <span className="label-mono">USDC</span>
         </div>
         <div className="text-[10px] text-accent tracking-wider2 uppercase pt-1">
           + PUBLIC_LEDGER_BALANCE

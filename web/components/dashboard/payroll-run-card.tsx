@@ -33,7 +33,7 @@ export function PayrollRunCard() {
   const [tx, setTx] = useState<`0x${string}` | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  const countdown = useRollingCountdown(72 * 3600);
+  const countdown = useRollingCountdown(24 * 3600);
 
   async function onRun() {
     setErr(null);
@@ -53,8 +53,11 @@ export function PayrollRunCard() {
   return (
     <Card label="NEXT_PAYROLL_RUN">
       <div className="space-y-3">
-        <div className="text-[28px] font-medium tabular-nums tracking-wider text-fg leading-tight">
-          {countdown}
+        <div>
+          <div className="text-[28px] font-medium tabular-nums tracking-wider text-fg leading-tight">
+            {countdown}
+          </div>
+          <div className="label-mono-fade pt-1">HH:MM:SS:CS • 24H_ROLLING</div>
         </div>
         <Button
           className="w-full"

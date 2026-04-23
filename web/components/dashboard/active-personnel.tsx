@@ -90,7 +90,7 @@ export function ActivePersonnel() {
   }, [publicClient, deployed, count]);
 
   return (
-    <section className="border border-border bg-bg">
+    <section className="border border-border bg-bg h-full flex flex-col">
       <div className="flex items-center justify-between px-6 pt-6 pb-2">
         <div>
           <h2 className="text-[18px] uppercase tracking-wider2 text-fg font-medium">
@@ -103,7 +103,16 @@ export function ActivePersonnel() {
         </Link>
       </div>
 
-      <div className="px-6 pb-6 pt-4">
+      <div className="px-6 pb-6 pt-4 flex-1">
+        {rows.length === 0 && !loading ? (
+          <div className="border border-border border-dashed flex flex-col items-center justify-center py-16 gap-3">
+            <span className="label-mono text-fade">&gt; NO_PERSONNEL_REGISTERED</span>
+            <span className="label-mono">ROSTER IS EMPTY — SEED VIA /TEAM OR /SEED</span>
+            <Link href={"/seed" as never}>
+              <Button variant="secondary">SEED_DEMO_ROSTER</Button>
+            </Link>
+          </div>
+        ) : (
         <Table>
           <THead>
             <TR>
@@ -115,15 +124,6 @@ export function ActivePersonnel() {
             </TR>
           </THead>
           <TBody>
-            {rows.length === 0 && !loading && (
-              <TR>
-                <TD className="text-dim" >—</TD>
-                <TD className="text-dim">NO_PERSONNEL_REGISTERED</TD>
-                <TD>&nbsp;</TD>
-                <TD>&nbsp;</TD>
-                <TD>&nbsp;</TD>
-              </TR>
-            )}
             {rows.map((r) => (
               <TR key={r.addr}>
                 <TD>
@@ -158,6 +158,7 @@ export function ActivePersonnel() {
             ))}
           </TBody>
         </Table>
+        )}
       </div>
     </section>
   );
