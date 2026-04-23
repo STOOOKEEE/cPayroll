@@ -24,7 +24,7 @@ type Step = "idle" | "approving" | "approved" | "depositing" | "done";
 type Phase = "idle" | "encrypting" | "submitting" | "pending";
 
 export default function TreasuryPage() {
-  const { address: account, isConnected } = useAccount();
+  const { isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const { writeContractAsync } = useWriteContract();
   const deployed = isDeployed();
@@ -102,22 +102,7 @@ export default function TreasuryPage() {
     }
   }
 
-  async function onMint() {
-    if (!account) return;
-    setErr(null);
-    try {
-      await writeContractAsync({
-        address: addresses.usdc,
-        abi: usdcAbi,
-        functionName: "mint",
-        args: [account, 1000_000000n],
-      });
-    } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
-    }
-  }
-
-  async function onWithdraw(e: React.FormEvent) {
+async function onWithdraw(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setWithdrawTx(null);
@@ -272,14 +257,15 @@ export default function TreasuryPage() {
             </a>
           )}
           <div className="mt-6 pt-4 border-t border-border">
-            <p className="label-mono-fade mb-2">DEV_HELPER</p>
-            <Button
-              variant="ghost"
-              onClick={onMint}
-              disabled={!deployed || !isConnected}
+            <p className="label-mono-fade mb-2">NEED_TESTNET_USDC</p>
+            <a
+              href="https://faucet.circle.com"
+              target="_blank"
+              rel="noreferrer"
+              className="label-mono-fg hover:text-accent underline"
             >
-              MINT 1000 USDC TO WALLET
-            </Button>
+              &gt; FAUCET.CIRCLE.COM
+            </a>
           </div>
         </Card>
 

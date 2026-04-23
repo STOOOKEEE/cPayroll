@@ -18,19 +18,20 @@ type Step = {
 };
 
 const INITIAL_STEPS: Step[] = [
-  { key: "mint", label: "MINT_10K_USDC_TO_OWNER", status: "idle" },
-  { key: "approve", label: "APPROVE_PAYROLL_5K_USDC", status: "idle" },
-  { key: "deposit", label: "DEPOSIT_5K_INTO_PAYROLL", status: "idle" },
-  { key: "emp1", label: "ADD_EMPLOYEE_1 — 3000_USDC", status: "idle" },
-  { key: "emp2", label: "ADD_EMPLOYEE_2 — 5000_USDC", status: "idle" },
-  { key: "emp3", label: "ADD_EMPLOYEE_3 — 7500_USDC", status: "idle" },
+  { key: "approve", label: "APPROVE_PAYROLL_30_USDC", status: "idle" },
+  { key: "deposit", label: "DEPOSIT_30_INTO_PAYROLL", status: "idle" },
+  { key: "emp1", label: "ADD_EMPLOYEE_1 — 5_USDC", status: "idle" },
+  { key: "emp2", label: "ADD_EMPLOYEE_2 — 10_USDC", status: "idle" },
+  { key: "emp3", label: "ADD_EMPLOYEE_3 — 15_USDC", status: "idle" },
   { key: "payall", label: "PAY_ALL", status: "idle" },
 ];
 
+const DEPOSIT_AMOUNT = 30n * 1_000_000n;
+
 const FIXTURE = [
-  { salary: 3000n * 1_000_000n, position: "CORE_DEVELOPER" },
-  { salary: 5000n * 1_000_000n, position: "DAO_OPERATIONS" },
-  { salary: 7500n * 1_000_000n, position: "SECURITY_AUDIT" },
+  { salary: 5n * 1_000_000n, position: "CORE_DEVELOPER" },
+  { salary: 10n * 1_000_000n, position: "DAO_OPERATIONS" },
+  { salary: 15n * 1_000_000n, position: "SECURITY_AUDIT" },
 ];
 
 export default function SeedPage() {
@@ -88,37 +89,25 @@ export default function SeedPage() {
     const generated: `0x${string}`[] = [];
 
     try {
-      // 1. Mint 10k USDC to the connected wallet
-      await runStep("mint", async () => {
-        const hash = await writeContractAsync({
-          address: addresses.usdc,
-          abi: usdcAbi,
-          functionName: "mint",
-          args: [address, 10_000n * 1_000_000n],
-        });
-        updateStep("mint", { detail: hash });
-        await wait(hash);
-      });
-
-      // 2. Approve Payroll to pull 5k
+      // 1. Approve Payroll to pull deposit amount of real USDC (Circle)
       await runStep("approve", async () => {
         const hash = await writeContractAsync({
           address: addresses.usdc,
           abi: usdcAbi,
           functionName: "approve",
-          args: [addresses.payroll, 5_000n * 1_000_000n],
+          args: [addresses.payroll, DEPOSIT_AMOUNT],
         });
         updateStep("approve", { detail: hash });
         await wait(hash);
       });
 
-      // 3. Deposit 5k — pulls USDC + wraps into cUSDC
+      // 2. Deposit — pulls USDC + wraps into cUSDC
       await runStep("deposit", async () => {
         const hash = await writeContractAsync({
           address: addresses.payroll,
           abi: payrollAbi,
           functionName: "deposit",
-          args: [5_000n * 1_000_000n],
+          args: [DEPOSIT_AMOUNT],
         });
         updateStep("deposit", { detail: hash });
         await wait(hash);
@@ -179,7 +168,7 @@ export default function SeedPage() {
       </header>
 
       <Banner tone="warning">
-        OWNER_ONLY • BURNS ARB_SEPOLIA ETH • GENERATES NEW TEST ACCOUNTS (UNCONTROLLED)
+        OWNER_ONLY • REQUIRES ≥30 USDC + ETH ON CALLER • GENERATES 3 UNCONTROLLED TEST ACCOUNTS
       </Banner>
 
       <Card label="PIPELINE">
