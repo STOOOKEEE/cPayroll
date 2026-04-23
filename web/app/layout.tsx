@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/providers";
-import { AppShell } from "@/components/app-shell";
+import { ClientProviders } from "@/components/client-providers";
 
 const mono = JetBrains_Mono({
   subsets: ["latin"],
@@ -21,9 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={mono.variable}>
       <body>
-        <Providers>
-          <AppShell>{children}</AppShell>
-        </Providers>
+        <ClientProviders>{children}</ClientProviders>
       </body>
     </html>
   );
