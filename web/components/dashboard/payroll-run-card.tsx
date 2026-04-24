@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useAccount, useWriteContract } from "wagmi";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { addresses, isDeployed, payrollAbi } from "@/lib/contracts";
+import { isDeployed, payrollAbi } from "@/lib/contracts";
 import { arbiscanTx } from "@/lib/format";
+import { useActivePayroll } from "@/lib/active-payroll";
 
 /**
  * Countdown to the next scheduled payroll run. The protocol has no schedule
@@ -28,6 +29,7 @@ function useRollingCountdown(periodSeconds: number) {
 
 export function PayrollRunCard() {
   const deployed = isDeployed();
+  const { address: payroll } = useActivePayroll();
   const { isConnected } = useAccount();
   const { writeContractAsync, isPending } = useWriteContract();
   const [tx, setTx] = useState<`0x${string}` | null>(null);
@@ -40,7 +42,7 @@ export function PayrollRunCard() {
     setTx(null);
     try {
       const hash = await writeContractAsync({
-        address: addresses.payroll,
+        address: payroll,
         abi: payrollAbi,
         functionName: "payAll",
       });

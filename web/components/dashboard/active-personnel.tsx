@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { RedactedBar } from "@/components/ui/redacted-bar";
 import { StatusBadge } from "@/components/ui/status-dot";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
-import { addresses, isDeployed, payrollAbi } from "@/lib/contracts";
+import { isDeployed, payrollAbi } from "@/lib/contracts";
+import { useActivePayroll } from "@/lib/active-payroll";
 import { arbiscanAddress, formatTimestamp, truncateAddress, truncateHandle } from "@/lib/format";
 
 type Row = {
@@ -34,11 +35,12 @@ function deterministicPosition(addr: string) {
 export function ActivePersonnel() {
   const publicClient = usePublicClient();
   const deployed = isDeployed();
+  const { address: payroll } = useActivePayroll();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(false);
 
   const countQuery = useReadContract({
-    address: deployed ? addresses.payroll : undefined,
+    address: deployed ? payroll : undefined,
     abi: payrollAbi,
     functionName: "employeeCount",
     query: { enabled: deployed },
@@ -61,13 +63,13 @@ export function ActivePersonnel() {
         const list: Row[] = [];
         for (let i = 0n; i < count; i++) {
           const addr = (await publicClient.readContract({
-            address: addresses.payroll,
+            address: payroll,
             abi: payrollAbi,
             functionName: "employeeList",
             args: [i],
           })) as `0x${string}`;
           const data = (await publicClient.readContract({
-            address: addresses.payroll,
+            address: payroll,
             abi: payrollAbi,
             functionName: "employees",
             args: [addr],
@@ -87,7 +89,7 @@ export function ActivePersonnel() {
     return () => {
       cancelled = true;
     };
-  }, [publicClient, deployed, count]);
+  }, [publicClient, deployed, count, payroll]);
 
   return (
     <section className="border border-border bg-bg h-full flex flex-col">

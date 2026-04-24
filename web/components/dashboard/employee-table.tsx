@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { RedactedBar } from "@/components/ui/redacted-bar";
 import { StatusBadge } from "@/components/ui/status-dot";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
-import { addresses, isDeployed, payrollAbi } from "@/lib/contracts";
+import { isDeployed, payrollAbi } from "@/lib/contracts";
+import { useActivePayroll } from "@/lib/active-payroll";
 import {
   arbiscanAddress,
   formatTimestamp,
@@ -34,13 +35,14 @@ export function EmployeeTable({
 }) {
   const publicClient = usePublicClient();
   const deployed = isDeployed();
+  const { address: payroll } = useActivePayroll();
   const { writeContractAsync, isPending } = useWriteContract();
   const [rows, setRows] = useState<Row[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
   const [err, setErr] = useState<string | null>(null);
 
   const countQuery = useReadContract({
-    address: deployed ? addresses.payroll : undefined,
+    address: deployed ? payroll : undefined,
     abi: payrollAbi,
     functionName: "employeeCount",
     query: { enabled: deployed },
@@ -59,13 +61,13 @@ export function EmployeeTable({
         const list: Row[] = [];
         for (let i = 0n; i < count; i++) {
           const addr = (await publicClient.readContract({
-            address: addresses.payroll,
+            address: payroll,
             abi: payrollAbi,
             functionName: "employeeList",
             args: [i],
           })) as `0x${string}`;
           const data = (await publicClient.readContract({
-            address: addresses.payroll,
+            address: payroll,
             abi: payrollAbi,
             functionName: "employees",
             args: [addr],
@@ -80,13 +82,13 @@ export function EmployeeTable({
     return () => {
       cancelled = true;
     };
-  }, [publicClient, deployed, count, reloadKey]);
+  }, [publicClient, deployed, count, reloadKey, payroll]);
 
   async function onRemove(addr: `0x${string}`) {
     setErr(null);
     try {
       await writeContractAsync({
-        address: addresses.payroll,
+        address: payroll,
         abi: payrollAbi,
         functionName: "removeEmployee",
         args: [addr],

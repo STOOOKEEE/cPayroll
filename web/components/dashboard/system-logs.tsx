@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePublicClient } from "wagmi";
 import { addresses, cUSDCAbi, isDeployed, payrollAbi } from "@/lib/contracts";
-import { truncateAddress, truncateHandle } from "@/lib/format";
+import { truncateAddress } from "@/lib/format";
+import { useActivePayroll } from "@/lib/active-payroll";
 
 type LogEntry = {
   level: "info" | "warn";
@@ -18,6 +19,7 @@ type LogEntry = {
 export function SystemLogs() {
   const publicClient = usePublicClient();
   const deployed = isDeployed();
+  const { address: payroll } = useActivePayroll();
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
   useEffect(() => {
@@ -30,13 +32,13 @@ export function SystemLogs() {
         const fromBlock = block > 5000n ? block - 5000n : 0n;
         const [paid, deposited, confidential] = await Promise.all([
           publicClient.getContractEvents({
-            address: addresses.payroll,
+            address: payroll,
             abi: payrollAbi,
             eventName: "Paid",
             fromBlock,
           }),
           publicClient.getContractEvents({
-            address: addresses.payroll,
+            address: payroll,
             abi: payrollAbi,
             eventName: "Deposited",
             fromBlock,
@@ -79,7 +81,7 @@ export function SystemLogs() {
     return () => {
       cancelled = true;
     };
-  }, [publicClient, deployed]);
+  }, [publicClient, deployed, payroll]);
 
   return (
     <div className="px-5 pt-6 space-y-2">

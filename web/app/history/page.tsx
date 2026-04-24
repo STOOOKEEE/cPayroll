@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePublicClient } from "wagmi";
 import { Card } from "@/components/ui/card";
 import { addresses, cUSDCAbi, isDeployed, payrollAbi } from "@/lib/contracts";
+import { useActivePayroll } from "@/lib/active-payroll";
 import {
   arbiscanAddress,
   arbiscanTx,
@@ -22,6 +23,7 @@ type Entry = {
 export default function HistoryPage() {
   const publicClient = usePublicClient();
   const deployed = isDeployed();
+  const { address: payroll } = useActivePayroll();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -39,25 +41,25 @@ export default function HistoryPage() {
         const [paid, added, removed, deposited, confidential, unwrapReq, unwrapFin] =
           await Promise.all([
             publicClient.getContractEvents({
-              address: addresses.payroll,
+              address: payroll,
               abi: payrollAbi,
               eventName: "Paid",
               fromBlock,
             }),
             publicClient.getContractEvents({
-              address: addresses.payroll,
+              address: payroll,
               abi: payrollAbi,
               eventName: "EmployeeAdded",
               fromBlock,
             }),
             publicClient.getContractEvents({
-              address: addresses.payroll,
+              address: payroll,
               abi: payrollAbi,
               eventName: "EmployeeRemoved",
               fromBlock,
             }),
             publicClient.getContractEvents({
-              address: addresses.payroll,
+              address: payroll,
               abi: payrollAbi,
               eventName: "Deposited",
               fromBlock,
@@ -153,7 +155,7 @@ export default function HistoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [publicClient, deployed]);
+  }, [publicClient, deployed, payroll]);
 
   return (
     <div className="p-8 space-y-6 max-w-6xl mx-auto">

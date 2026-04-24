@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Modal, AuditReportBody, type AuditReportView } from "@/components/ui/modal";
 import { addresses, cUSDCAbi, isDeployed, payrollAbi, usdcAbi } from "@/lib/contracts";
+import { useActivePayroll } from "@/lib/active-payroll";
 import {
   arbiscanTx,
   formatUsdc,
@@ -27,6 +28,7 @@ export default function TreasuryPage() {
   const { isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const { writeContractAsync } = useWriteContract();
+  const { address: payroll } = useActivePayroll();
   const deployed = isDeployed();
 
   const [amount, setAmount] = useState("100");
@@ -46,18 +48,18 @@ export default function TreasuryPage() {
     address: deployed ? addresses.usdc : undefined,
     abi: usdcAbi,
     functionName: "balanceOf",
-    args: deployed ? [addresses.payroll] : undefined,
+    args: deployed ? [payroll] : undefined,
     query: { enabled: deployed },
   });
   const treasuryHandle = useReadContract({
     address: deployed ? addresses.cUSDC : undefined,
     abi: cUSDCAbi,
     functionName: "confidentialBalanceOf",
-    args: deployed ? [addresses.payroll] : undefined,
+    args: deployed ? [payroll] : undefined,
     query: { enabled: deployed },
   });
   const withdrawPending = useReadContract({
-    address: deployed ? addresses.payroll : undefined,
+    address: deployed ? payroll : undefined,
     abi: payrollAbi,
     functionName: "withdrawPending",
     query: { enabled: deployed },
@@ -72,7 +74,7 @@ export default function TreasuryPage() {
         address: addresses.usdc,
         abi: usdcAbi,
         functionName: "approve",
-        args: [addresses.payroll, value],
+        args: [payroll, value],
       });
       setStep("approved");
     } catch (e) {
@@ -87,7 +89,7 @@ export default function TreasuryPage() {
       const value = parseUsdc(amount);
       setStep("depositing");
       const hash = await writeContractAsync({
-        address: addresses.payroll,
+        address: payroll,
         abi: payrollAbi,
         functionName: "deposit",
         args: [value],
@@ -122,14 +124,14 @@ async function onWithdraw(e: React.FormEvent) {
       const { handle, handleProof } = await encryptAmount(
         walletClient,
         amountBig,
-        addresses.payroll
+        payroll
       );
       setWithdrawAmount("");
       amountBig = 0n;
 
       setWithdrawPhase("submitting");
       const hash = await writeContractAsync({
-        address: addresses.payroll,
+        address: payroll,
         abi: payrollAbi,
         functionName: "withdrawUnderlying",
         args: [handle, handleProof],
@@ -147,7 +149,7 @@ async function onWithdraw(e: React.FormEvent) {
     setErr(null);
     try {
       await writeContractAsync({
-        address: addresses.payroll,
+        address: payroll,
         abi: payrollAbi,
         functionName: "clearWithdrawPending",
       });

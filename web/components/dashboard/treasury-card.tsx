@@ -4,6 +4,7 @@ import { useReadContract } from "wagmi";
 import { Card } from "@/components/ui/card";
 import { addresses, isDeployed, usdcAbi } from "@/lib/contracts";
 import { formatUsdc } from "@/lib/format";
+import { useActivePayroll } from "@/lib/active-payroll";
 
 function formatWithThousands(whole: string): string {
   return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -11,11 +12,12 @@ function formatWithThousands(whole: string): string {
 
 export function TreasuryCard() {
   const deployed = isDeployed();
+  const { address: payroll } = useActivePayroll();
   const treasury = useReadContract({
     address: deployed ? addresses.usdc : undefined,
     abi: usdcAbi,
     functionName: "balanceOf",
-    args: deployed ? [addresses.payroll] : undefined,
+    args: deployed ? [payroll] : undefined,
     query: { enabled: deployed },
   });
 

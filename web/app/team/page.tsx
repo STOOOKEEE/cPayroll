@@ -6,9 +6,10 @@ import { useAccount, useWalletClient, useWriteContract } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmployeeTable } from "@/components/dashboard/employee-table";
-import { addresses, isDeployed, payrollAbi } from "@/lib/contracts";
+import { isDeployed, payrollAbi } from "@/lib/contracts";
 import { arbiscanTx, parseUsdc, truncateHandle } from "@/lib/format";
 import { encryptAmount } from "@/lib/nox";
+import { useActivePayroll } from "@/lib/active-payroll";
 
 type Phase = "idle" | "encrypting" | "submitting" | "done";
 
@@ -16,6 +17,7 @@ export default function TeamPage() {
   const { isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const { writeContractAsync } = useWriteContract();
+  const { address: payroll } = useActivePayroll();
   const [empAddr, setEmpAddr] = useState("");
   const [salary, setSalary] = useState("");
   const [phase, setPhase] = useState<Phase>("idle");
@@ -52,14 +54,14 @@ export default function TeamPage() {
       const { handle, handleProof } = await encryptAmount(
         walletClient,
         salaryBig,
-        addresses.payroll
+        payroll
       );
       setSalary("");
       salaryBig = 0n;
 
       setPhase("submitting");
       const hash = await writeContractAsync({
-        address: addresses.payroll,
+        address: payroll,
         abi: payrollAbi,
         functionName: "addEmployee",
         args: [empAddr as `0x${string}`, handle, handleProof],

@@ -7,6 +7,7 @@ import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { addresses, isDeployed, payrollAbi, usdcAbi } from "@/lib/contracts";
+import { useActivePayroll } from "@/lib/active-payroll";
 import { arbiscanTx, truncateAddress, truncateHandle } from "@/lib/format";
 import { encryptAmount } from "@/lib/nox";
 
@@ -39,6 +40,7 @@ export default function SeedPage() {
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
   const { writeContractAsync } = useWriteContract();
+  const { address: payroll } = useActivePayroll();
 
   const [steps, setSteps] = useState<Step[]>(INITIAL_STEPS);
   const [running, setRunning] = useState(false);
@@ -95,7 +97,7 @@ export default function SeedPage() {
           address: addresses.usdc,
           abi: usdcAbi,
           functionName: "approve",
-          args: [addresses.payroll, DEPOSIT_AMOUNT],
+          args: [payroll, DEPOSIT_AMOUNT],
         });
         updateStep("approve", { detail: hash });
         await wait(hash);
@@ -104,7 +106,7 @@ export default function SeedPage() {
       // 2. Deposit — pulls USDC + wraps into cUSDC
       await runStep("deposit", async () => {
         const hash = await writeContractAsync({
-          address: addresses.payroll,
+          address: payroll,
           abi: payrollAbi,
           functionName: "deposit",
           args: [DEPOSIT_AMOUNT],
@@ -124,10 +126,10 @@ export default function SeedPage() {
           const { handle, handleProof } = await encryptAmount(
             walletClient,
             FIXTURE[i].salary,
-            addresses.payroll
+            payroll
           );
           const hash = await writeContractAsync({
-            address: addresses.payroll,
+            address: payroll,
             abi: payrollAbi,
             functionName: "addEmployee",
             args: [newAcct.address, handle, handleProof],
@@ -142,7 +144,7 @@ export default function SeedPage() {
       // 5. payAll — confidential transfer to each
       await runStep("payall", async () => {
         const hash = await writeContractAsync({
-          address: addresses.payroll,
+          address: payroll,
           abi: payrollAbi,
           functionName: "payAll",
         });
