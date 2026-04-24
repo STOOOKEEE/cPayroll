@@ -12,6 +12,7 @@ const TARGET = join(ROOT, "web", "lib", "contracts.ts");
 
 const artifacts = {
   payrollAbi: join(OUT, "Payroll.sol", "Payroll.json"),
+  payrollFactoryAbi: join(OUT, "PayrollFactory.sol", "PayrollFactory.json"),
   cUSDCAbi: join(OUT, "cUSDC.sol", "cUSDC.json"),
   usdcAbi: join(OUT, "MockUSDC.sol", "MockUSDC.json"),
 };
@@ -38,6 +39,7 @@ import { env } from "./env";
 
 export const addresses = {
   payroll: env.NEXT_PUBLIC_PAYROLL_ADDR as \`0x\${string}\`,
+  factory: env.NEXT_PUBLIC_FACTORY_ADDR as \`0x\${string}\`,
   cUSDC: env.NEXT_PUBLIC_CUSDC_ADDR as \`0x\${string}\`,
   usdc: env.NEXT_PUBLIC_USDC_ADDR as \`0x\${string}\`,
 } as const;
@@ -50,7 +52,12 @@ export function isDeployed(): boolean {
   );
 }
 
+export function isFactoryDeployed(): boolean {
+  return isAddress(addresses.factory);
+}
+
 export const payrollAbi = ${JSON.stringify(abis.payrollAbi, null, 2)} as const;
+export const payrollFactoryAbi = ${JSON.stringify(abis.payrollFactoryAbi, null, 2)} as const;
 export const cUSDCAbi = ${JSON.stringify(abis.cUSDCAbi, null, 2)} as const;
 export const usdcAbi = ${JSON.stringify(abis.usdcAbi, null, 2)} as const;
 `;
