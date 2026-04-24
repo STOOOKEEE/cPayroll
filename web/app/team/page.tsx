@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { isAddress } from "viem";
 import { useAccount, useWalletClient, useWriteContract } from "wagmi";
+import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmployeeTable } from "@/components/dashboard/employee-table";
@@ -84,6 +85,10 @@ export default function TeamPage() {
         </h1>
         <p className="label-mono mt-1">ADD, REMOVE, AND ROTATE ENCRYPTED SALARIES</p>
       </header>
+
+      {!isConnected && (
+        <Banner tone="info">CONNECT_WALLET_TO_ENABLE_ACTIONS</Banner>
+      )}
 
       <div className="grid grid-cols-3 gap-6">
         <Card label="ADD_EMPLOYEE" className="col-span-1">

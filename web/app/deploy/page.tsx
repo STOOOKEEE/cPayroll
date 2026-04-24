@@ -115,6 +115,10 @@ export default function DeployPage() {
         </p>
       </header>
 
+      {!isConnected && (
+        <Banner tone="info">CONNECT_WALLET_TO_ENABLE_ACTIONS</Banner>
+      )}
+
       <Banner tone="info">
         FACTORY PATTERN • EIP-1167 MINIMAL PROXY • ~25× CHEAPER THAN FULL DEPLOY
       </Banner>

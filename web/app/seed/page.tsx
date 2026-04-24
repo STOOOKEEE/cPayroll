@@ -169,6 +169,10 @@ export default function SeedPage() {
         </p>
       </header>
 
+      {!isConnected && (
+        <Banner tone="info">CONNECT_WALLET_TO_ENABLE_ACTIONS</Banner>
+      )}
+
       <Banner tone="warning">
         OWNER_ONLY • REQUIRES ≥30 USDC + ETH ON CALLER • GENERATES 3 UNCONTROLLED TEST ACCOUNTS
       </Banner>

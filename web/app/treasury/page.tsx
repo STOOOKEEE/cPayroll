@@ -191,6 +191,12 @@ async function onWithdraw(e: React.FormEvent) {
         <p className="label-mono mt-1">WRAP, UNWRAP, AUDIT, AND MONITOR FUNDS</p>
       </header>
 
+      {!isConnected && (
+        <Banner tone="info">
+          CONNECT_WALLET_TO_ENABLE_ACTIONS
+        </Banner>
+      )}
+
       {withdrawPending.data === true && (
         <Banner tone="warning">
           UNWRAP_IN_FLIGHT — PAYROLL LOCKED UNTIL CLEAR_PENDING
