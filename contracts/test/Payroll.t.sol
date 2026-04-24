@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {Payroll} from "../src/Payroll.sol";
+import {PayrollFactory} from "../src/PayrollFactory.sol";
 import {MockUSDC} from "../src/mocks/MockUSDC.sol";
 import {CUSDC} from "../src/CUSDC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -14,6 +15,8 @@ import {externalEuint256} from "@iexec-nox/nox-protocol-contracts/contracts/sdk/
 ///      the fork-only integration suite below.
 contract PayrollTest is Test {
     Payroll internal payroll;
+    PayrollFactory internal factory;
+    Payroll internal implementation;
     MockUSDC internal usdc;
     CUSDC internal ct;
     address internal owner = address(0xA11CE);
@@ -22,7 +25,15 @@ contract PayrollTest is Test {
     function setUp() public {
         usdc = new MockUSDC();
         ct = new CUSDC(IERC20(address(usdc)));
-        payroll = new Payroll(owner, ct, IERC20(address(usdc)));
+        implementation = new Payroll();
+        factory = new PayrollFactory(
+            address(implementation),
+            ct,
+            IERC20(address(usdc))
+        );
+
+        vm.prank(owner);
+        payroll = Payroll(factory.createPayroll());
     }
 
     function test_ownerSet() public view {
@@ -33,6 +44,16 @@ contract PayrollTest is Test {
 
     function test_employeeCountStartsZero() public view {
         assertEq(payroll.employeeCount(), 0);
+    }
+
+    function test_initialize_cannotBeCalledTwice() public {
+        vm.expectRevert(Payroll.AlreadyInitialized.selector);
+        payroll.initialize(owner, ct, IERC20(address(usdc)));
+    }
+
+    function test_implementation_isLocked() public {
+        vm.expectRevert(Payroll.AlreadyInitialized.selector);
+        implementation.initialize(owner, ct, IERC20(address(usdc)));
     }
 
     function test_onlyOwner_addEmployee() public {
@@ -73,8 +94,6 @@ contract PayrollTest is Test {
     }
 
     function test_clearWithdrawPending_ownerCallSucceeds() public {
-        // Flag starts false; owner call should not revert and should leave
-        // it false. Exercises the access-control path without touching Nox.
         assertEq(payroll.withdrawPending(), false);
         vm.prank(owner);
         payroll.clearWithdrawPending();
@@ -88,20 +107,63 @@ contract PayrollTest is Test {
     }
 }
 
-/// @dev Fork-only integration tests. Run with:
-///      forge test --fork-url $ARB_SEPOLIA_RPC --match-contract PayrollForkTest
-contract PayrollForkTest is Test {
-    uint256 constant ARB_SEPOLIA = 421614;
+contract PayrollFactoryTest is Test {
+    PayrollFactory internal factory;
+    Payroll internal implementation;
+    MockUSDC internal usdc;
+    CUSDC internal ct;
+
+    address internal alice = address(0xA11CE);
+    address internal bob = address(0xB0B);
 
     function setUp() public {
-        vm.skip(block.chainid != ARB_SEPOLIA);
+        usdc = new MockUSDC();
+        ct = new CUSDC(IERC20(address(usdc)));
+        implementation = new Payroll();
+        factory = new PayrollFactory(
+            address(implementation),
+            ct,
+            IERC20(address(usdc))
+        );
     }
 
-    function test_fork_deposit_and_payAll() public {
-        vm.skip(block.chainid != ARB_SEPOLIA);
-        // TODO: wire encrypted inputs via @iexec-nox/handle client and hit
-        // deposit → addEmployee → payAll end-to-end against the real Nox
-        // gateway. This test is a placeholder — the real integration runs
-        // from the frontend demo as required by the challenge.
+    function test_createPayroll_returnsIndependentClone() public {
+        vm.prank(alice);
+        address a = factory.createPayroll();
+        vm.prank(bob);
+        address b = factory.createPayroll();
+
+        assertTrue(a != b);
+        assertEq(Payroll(a).owner(), alice);
+        assertEq(Payroll(b).owner(), bob);
+        assertEq(factory.payrollCount(), 2);
+        assertEq(factory.payrollCountOf(alice), 1);
+        assertEq(factory.payrollCountOf(bob), 1);
+    }
+
+    function test_latestPayrollOf_tracksNewest() public {
+        vm.prank(alice);
+        address first = factory.createPayroll();
+        vm.prank(alice);
+        address second = factory.createPayroll();
+
+        assertEq(factory.latestPayrollOf(alice), second);
+        assertTrue(first != second);
+    }
+
+    function test_latestPayrollOf_noneYet() public view {
+        assertEq(factory.latestPayrollOf(alice), address(0));
+    }
+
+    function test_clonesShareImplementationBytecodeButNotStorage() public {
+        vm.prank(alice);
+        Payroll a = Payroll(factory.createPayroll());
+        vm.prank(bob);
+        Payroll b = Payroll(factory.createPayroll());
+
+        assertEq(a.employeeCount(), 0);
+        assertEq(b.employeeCount(), 0);
+        // Owners are independent — already asserted above, but also true:
+        assertTrue(a.owner() != b.owner());
     }
 }

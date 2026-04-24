@@ -19,9 +19,14 @@ contract Payroll is IPayroll {
     /// @notice Cap on the employee list to keep `payAll` gas bounded.
     uint256 public constant MAX_EMPLOYEES = 50;
 
+    /// @notice Set to true once `initialize` has run. Starts true on the
+    ///         implementation contract (locked by the constructor) so that
+    ///         only clones can be initialized.
+    bool private _initialized;
+
     address public owner;
-    CUSDC public immutable cToken;
-    IERC20 public immutable underlying;
+    CUSDC public cToken;
+    IERC20 public underlying;
 
     struct Employee {
         bool active;
@@ -46,14 +51,27 @@ contract Payroll is IPayroll {
     error EmployeeListFull();
     error ZeroAddress();
     error WithdrawPending();
+    error AlreadyInitialized();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert NotOwner();
         _;
     }
 
-    constructor(address _owner, CUSDC _cToken, IERC20 _underlying) {
+    /// @notice Locks the implementation contract. Clones are fresh storage
+    ///         so `_initialized = true` here does NOT propagate to them.
+    constructor() {
+        _initialized = true;
+    }
+
+    /// @notice Sets owner + token refs on a fresh clone. Callable once.
+    /// @dev    Typically invoked by `PayrollFactory.createPayroll` atomically
+    ///         after `Clones.clone`, so end users never see an uninitialized
+    ///         Payroll on-chain.
+    function initialize(address _owner, CUSDC _cToken, IERC20 _underlying) external {
+        if (_initialized) revert AlreadyInitialized();
         if (_owner == address(0)) revert ZeroAddress();
+        _initialized = true;
         owner = _owner;
         cToken = _cToken;
         underlying = _underlying;
