@@ -32,15 +32,7 @@ function TopBar() {
   return (
     <header className="flex items-center justify-between border-b border-border px-6 h-12">
       <Brand />
-      <div className="flex items-center gap-3">
-        <button className="label-mono-fade hover:text-fg" aria-label="menu">…</button>
-        <button className="label-mono-fade hover:text-fg" aria-label="bookmark">
-          <svg width="12" height="14" viewBox="0 0 12 14" fill="none" stroke="currentColor">
-            <path d="M1 1h10v12l-5-3-5 3z" />
-          </svg>
-        </button>
-        <ConnectButton />
-      </div>
+      <ConnectButton />
     </header>
   );
 }
