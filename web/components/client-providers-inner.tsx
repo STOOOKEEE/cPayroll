@@ -8,6 +8,7 @@ import { WagmiProvider } from "wagmi";
 import { arbitrumSepolia } from "wagmi/chains";
 import { env } from "@/lib/env";
 import { AppShell } from "./app-shell";
+import { ExtensionErrorFilter } from "./extension-error-filter";
 
 // Primary first, then public fallbacks. If the configured RPC is rate-limited
 // or CORS-blocked from the browser, wagmi silently retries the next transport.
@@ -42,6 +43,7 @@ export default function ClientProvidersInner({
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider modalSize="compact">
+          <ExtensionErrorFilter />
           <AppShell>{children}</AppShell>
         </RainbowKitProvider>
       </QueryClientProvider>
