@@ -60,28 +60,36 @@ export function ActivePersonnel() {
     setLoading(true);
     (async () => {
       try {
-        const list: Row[] = [];
-        for (let i = 0n; i < count; i++) {
-          const addr = (await publicClient.readContract({
-            address: payroll,
-            abi: payrollAbi,
-            functionName: "employeeList",
-            args: [i],
-          })) as `0x${string}`;
-          const data = (await publicClient.readContract({
-            address: payroll,
-            abi: payrollAbi,
-            functionName: "employees",
-            args: [addr],
-          })) as readonly [boolean, `0x${string}`, bigint, bigint];
-          list.push({
-            addr,
-            active: data[0],
-            salaryHandle: data[1],
-            lastPaid: data[2],
-          });
-        }
+        const indices = Array.from({ length: Number(count) }, (_, i) => BigInt(i));
+        const addrs = await Promise.all(
+          indices.map((i) =>
+            publicClient.readContract({
+              address: payroll,
+              abi: payrollAbi,
+              functionName: "employeeList",
+              args: [i],
+            }) as Promise<`0x${string}`>
+          )
+        );
+        const details = await Promise.all(
+          addrs.map((addr) =>
+            publicClient.readContract({
+              address: payroll,
+              abi: payrollAbi,
+              functionName: "employees",
+              args: [addr],
+            }) as Promise<readonly [boolean, `0x${string}`, bigint, bigint]>
+          )
+        );
+        const list: Row[] = addrs.map((addr, i) => ({
+          addr,
+          active: details[i][0],
+          salaryHandle: details[i][1],
+          lastPaid: details[i][2],
+        }));
         if (!cancelled) setRows(list);
+      } catch {
+        if (!cancelled) setRows([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -106,7 +114,11 @@ export function ActivePersonnel() {
       </div>
 
       <div className="px-6 pb-6 pt-4 flex-1">
-        {rows.length === 0 && !loading ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <span className="label-mono animate-pulse">&gt; LOADING_PERSONNEL…</span>
+          </div>
+        ) : rows.length === 0 ? (
           <div className="border border-border border-dashed flex flex-col items-center justify-center py-16 gap-3">
             <span className="label-mono text-fade">&gt; NO_PERSONNEL_REGISTERED</span>
             <span className="label-mono">ROSTER IS EMPTY — SEED VIA /TEAM OR /SEED</span>
@@ -115,7 +127,7 @@ export function ActivePersonnel() {
             </Link>
           </div>
         ) : (
-        <Table>
+          <Table>
           <THead>
             <TR>
               <TH>STATUS</TH>

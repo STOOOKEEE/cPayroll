@@ -11,7 +11,7 @@ const config: Config = {
         redact: "#262626",
         fg: "#FAFAFA",
         dim: "#737373",
-        fade: "#404040",
+        fade: "#6b6b6b",
         accent: {
           DEFAULT: "#E10600",
           hover: "#C20500",

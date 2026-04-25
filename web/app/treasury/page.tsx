@@ -78,7 +78,8 @@ export default function TreasuryPage() {
       });
       setStep("approved");
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
       setStep("idle");
     }
   }
@@ -99,7 +100,8 @@ export default function TreasuryPage() {
       treasuryUsdc.refetch();
       treasuryHandle.refetch();
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
       setStep("approved");
     }
   }
@@ -140,7 +142,8 @@ async function onWithdraw(e: React.FormEvent) {
       setWithdrawPhase("pending");
       withdrawPending.refetch();
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
       setWithdrawPhase("idle");
     }
   }
@@ -156,7 +159,8 @@ async function onWithdraw(e: React.FormEvent) {
       setWithdrawPhase("idle");
       withdrawPending.refetch();
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
     }
   }
 
@@ -225,8 +229,9 @@ async function onWithdraw(e: React.FormEvent) {
 
       <div className="grid grid-cols-2 gap-6">
         <Card label="DEPOSIT / WRAP_TO_CUSDC">
-          <label className="label-mono block mb-2">AMOUNT_USDC</label>
+          <label htmlFor="deposit-amount" className="label-mono block mb-2">AMOUNT_USDC</label>
           <input
+            id="deposit-amount"
             className="w-full bg-bg border border-border px-3 py-2 font-mono text-[12px] focus:outline-none focus:border-accent mb-4"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -252,7 +257,16 @@ async function onWithdraw(e: React.FormEvent) {
             </Button>
           </div>
           {step === "done" && (
-            <p className="mt-3 label-mono text-accent">&gt; DEPOSIT_CONFIRMED</p>
+            <div className="mt-3 space-y-2">
+              <p className="label-mono text-accent">&gt; DEPOSIT_CONFIRMED</p>
+              <button
+                type="button"
+                onClick={() => { setStep("idle"); setDepositTx(null); }}
+                className="label-mono hover:text-fg"
+              >
+                &gt; NEW_DEPOSIT
+              </button>
+            </div>
           )}
           {depositTx && (
             <a
@@ -279,8 +293,9 @@ async function onWithdraw(e: React.FormEvent) {
 
         <Card label="EMERGENCY_WITHDRAW">
           <form onSubmit={onWithdraw} className="space-y-3">
-            <label className="label-mono block">AMOUNT_USDC (ENCRYPTED)</label>
+            <label htmlFor="withdraw-amount" className="label-mono block">AMOUNT_USDC (ENCRYPTED)</label>
             <input
+              id="withdraw-amount"
               className="w-full bg-bg border border-border px-3 py-2 font-mono text-[12px] focus:outline-none focus:border-accent"
               value={withdrawAmount}
               onChange={(e) => setWithdrawAmount(e.target.value)}

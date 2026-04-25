@@ -35,15 +35,13 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+const CONTRACTS_DIR = path.resolve(process.cwd(), "..", "contracts", "src");
+
 async function loadContractSource(contractName: string): Promise<string> {
-  // Resolve relative to the repo root: web/ -> ../contracts/src/<name>.sol
-  const filePath = path.join(
-    process.cwd(),
-    "..",
-    "contracts",
-    "src",
-    `${contractName}.sol`
-  );
+  const filePath = path.resolve(CONTRACTS_DIR, `${contractName}.sol`);
+  if (!filePath.startsWith(CONTRACTS_DIR + path.sep)) {
+    throw new Error("Path traversal blocked");
+  }
   return fs.readFile(filePath, "utf8");
 }
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import {IPayroll} from "./interfaces/IPayroll.sol";
 import {CUSDC} from "./CUSDC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {
     Nox,
     euint256,
@@ -16,6 +17,7 @@ import {
 ///         confidential payments. Salaries and balances remain encrypted
 ///         end-to-end via ERC-7984; only addresses and timestamps are public.
 contract Payroll is IPayroll {
+    using SafeERC20 for IERC20;
     /// @notice Cap on the employee list to keep `payAll` gas bounded.
     uint256 public constant MAX_EMPLOYEES = 50;
 
@@ -79,8 +81,8 @@ contract Payroll is IPayroll {
 
     /// @inheritdoc IPayroll
     function deposit(uint256 amount) external onlyOwner {
-        underlying.transferFrom(msg.sender, address(this), amount);
-        underlying.approve(address(cToken), amount);
+        underlying.safeTransferFrom(msg.sender, address(this), amount);
+        underlying.forceApprove(address(cToken), amount);
         cToken.wrap(address(this), amount);
         emit Deposited(msg.sender, amount);
     }
@@ -121,6 +123,7 @@ contract Payroll is IPayroll {
         Nox.allowThis(salary);
         Nox.allow(salary, address(cToken));
         e.salary = salary;
+        emit SalaryUpdated(emp);
     }
 
     /// @inheritdoc IPayroll
@@ -164,20 +167,20 @@ contract Payroll is IPayroll {
         if (withdrawPending) revert WithdrawPending();
         uint256 n = employeeList.length;
         uint64 ts = uint64(block.timestamp);
+        uint256 paid;
         for (uint256 i = 0; i < n; ++i) {
             address emp = employeeList[i];
             Employee storage e = employees[emp];
             if (!e.active) continue;
-            // Best-effort: swallow individual transfer failures so one bad
-            // employee can't block the rest of payroll.
             try cToken.confidentialTransfer(emp, e.salary) returns (euint256) {
                 e.lastPaid = ts;
                 emit Paid(emp, ts);
+                ++paid;
             } catch {
-                // skip
+                emit PayFailed(emp);
             }
         }
-        emit PayrollRun(ts, n);
+        emit PayrollRun(ts, paid);
     }
 
     /// @inheritdoc IPayroll
@@ -214,6 +217,7 @@ contract Payroll is IPayroll {
     ///         has finalized off-chain, re-enabling payroll operations.
     function clearWithdrawPending() external onlyOwner {
         withdrawPending = false;
+        emit WithdrawCleared(uint64(block.timestamp));
     }
 
     function employeeCount() external view returns (uint256) {

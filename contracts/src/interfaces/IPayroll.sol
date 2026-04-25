@@ -11,6 +11,9 @@ interface IPayroll {
     event PayrollRun(uint64 timestamp, uint256 count);
     event Deposited(address indexed from, uint256 underlyingAmount);
     event WithdrawRequested(address indexed to, euint256 requestId);
+    event WithdrawCleared(uint64 timestamp);
+    event PayFailed(address indexed emp);
+    event SalaryUpdated(address indexed emp);
 
     function deposit(uint256 amount) external;
     function addEmployee(address emp, externalEuint256 encSalary, bytes calldata proof) external;

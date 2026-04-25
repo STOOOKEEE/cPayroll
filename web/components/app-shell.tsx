@@ -18,7 +18,7 @@ const tabs: { href: Route; label: string }[] = [
 function Brand() {
   return (
     <div className="flex items-center gap-2">
-      <svg width="14" height="14" viewBox="0 0 14 14" className="text-fg">
+      <svg width="14" height="14" viewBox="0 0 14 14" className="text-fg" aria-hidden="true">
         <path fill="currentColor" d="M0 0h5v5H0zM9 0h5v5H9zM0 9h5v5H0zM9 9h5v5H9z" />
       </svg>
       <span className="label-mono-fg">Confidential Onchain Payroll</span>
@@ -46,8 +46,8 @@ function TabBar() {
     chainId === 421614 ? "ARB_SEPOLIA" : chainId ? `CHAIN_${chainId}` : "OFFLINE";
 
   return (
-    <nav className="flex items-center justify-between border-b border-border px-6 h-14">
-      <div className="flex items-center gap-4">
+    <nav className="flex items-center justify-between border-b border-border px-6 h-14 overflow-x-auto">
+      <div className="flex items-center gap-4 shrink-0">
         <span className="text-accent text-[15px] font-medium tracking-wider2 mr-2">
           C_PAYROLL
         </span>

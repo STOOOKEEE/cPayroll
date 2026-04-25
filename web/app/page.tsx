@@ -6,8 +6,8 @@ import { EmployeePreview } from "@/components/dashboard/employee-preview";
 
 export default function Dashboard() {
   return (
-    <div className="grid grid-cols-12 min-h-[calc(100vh-104px)]">
-      <section className="col-span-3 border-r border-border py-6 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-104px)]">
+      <section className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-border py-6 space-y-6">
         <div className="px-5">
           <div className="label-mono-fade mb-3">TREASURY_OVERVIEW</div>
         </div>
@@ -16,11 +16,11 @@ export default function Dashboard() {
         <SystemLogs />
       </section>
 
-      <section className="col-span-6 py-6">
+      <section className="lg:col-span-6 py-6">
         <ActivePersonnel />
       </section>
 
-      <section className="col-span-3 border-l border-border py-6">
+      <section className="hidden lg:block lg:col-span-3 border-l border-border py-6">
         <EmployeePreview />
       </section>
     </div>

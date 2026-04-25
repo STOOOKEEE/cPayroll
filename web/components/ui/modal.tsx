@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type ModalProps = {
   open: boolean;
@@ -10,21 +10,46 @@ export type ModalProps = {
 };
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+
+    const prev = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+
+    return () => {
+      document.removeEventListener("keydown", handler);
+      prev?.focus();
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
       <div
-        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-neutral-800 bg-neutral-950 p-6 shadow-xl"
+        ref={dialogRef}
+        tabIndex={-1}
+        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto border border-border bg-surface p-6 shadow-xl focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold">{title}</h2>
+          <h2 id="modal-title" className="text-[13px] uppercase tracking-wider2 font-medium text-fg">
+            {title}
+          </h2>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-white"
+            className="text-dim hover:text-fg"
             aria-label="Close"
           >
             ✕
@@ -39,11 +64,11 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 type Severity = "low" | "medium" | "high" | "critical" | "unknown";
 
 const SEVERITY_COLORS: Record<Severity, string> = {
-  low: "bg-green-900 text-green-200",
-  medium: "bg-yellow-900 text-yellow-200",
-  high: "bg-orange-900 text-orange-200",
-  critical: "bg-red-900 text-red-200",
-  unknown: "bg-neutral-800 text-neutral-300",
+  low: "bg-bg text-fg border border-border",
+  medium: "bg-bg text-accent border border-border",
+  high: "bg-accent-dark text-fg border border-accent",
+  critical: "bg-accent text-fg border border-accent",
+  unknown: "bg-surface text-dim border border-border",
 };
 
 export type AuditReportView = {
@@ -56,10 +81,10 @@ export type AuditReportView = {
 export function AuditReportBody({ report }: { report: AuditReportView }) {
   const [showRaw, setShowRaw] = useState(false);
   return (
-    <div className="space-y-4 text-sm">
+    <div className="space-y-4 text-[12px] font-mono">
       <div>
         <span
-          className={`inline-block rounded px-2 py-1 text-xs font-semibold uppercase ${
+          className={`inline-block px-2 py-1 text-[10px] uppercase tracking-wider2 ${
             SEVERITY_COLORS[report.severity] ?? SEVERITY_COLORS.unknown
           }`}
         >
@@ -67,28 +92,28 @@ export function AuditReportBody({ report }: { report: AuditReportView }) {
         </span>
       </div>
       <div>
-        <h3 className="font-semibold text-neutral-200">Summary</h3>
-        <p className="mt-1 text-neutral-400">{report.summary}</p>
+        <h3 className="label-mono-fg">Summary</h3>
+        <p className="mt-1 text-dim">{report.summary}</p>
       </div>
       <div>
-        <h3 className="font-semibold text-neutral-200">
+        <h3 className="label-mono-fg">
           Findings ({report.findings.length})
         </h3>
         {report.findings.length === 0 ? (
-          <p className="mt-1 text-neutral-500">No findings reported.</p>
+          <p className="mt-1 text-dim">No findings reported.</p>
         ) : (
           <ul className="mt-2 space-y-2">
             {report.findings.map((f, i) => (
               <li
                 key={i}
-                className="rounded border border-neutral-800 p-3"
+                className="border border-border p-3"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold">{f.title}</span>
-                  <span className="text-xs text-neutral-400">{f.severity}</span>
+                  <span className="text-fg">{f.title}</span>
+                  <span className="label-mono">{f.severity}</span>
                 </div>
                 {f.description && (
-                  <p className="mt-1 text-neutral-400">{f.description}</p>
+                  <p className="mt-1 text-dim">{f.description}</p>
                 )}
               </li>
             ))}
@@ -98,12 +123,12 @@ export function AuditReportBody({ report }: { report: AuditReportView }) {
       <div>
         <button
           onClick={() => setShowRaw((v) => !v)}
-          className="text-xs text-neutral-400 underline"
+          className="label-mono hover:text-fg underline"
         >
           {showRaw ? "Hide" : "Show"} raw response
         </button>
         {showRaw && (
-          <pre className="mt-2 max-h-64 overflow-auto rounded bg-neutral-900 p-2 text-xs text-neutral-300">
+          <pre className="mt-2 max-h-64 overflow-auto bg-bg border border-border p-2 text-[11px] text-dim">
             {report.raw}
           </pre>
         )}

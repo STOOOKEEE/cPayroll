@@ -66,14 +66,12 @@ export function SystemLogs() {
         if (entries.length === 0) {
           entries.push({ level: "info", text: "AWAITING_FIRST_EVENT" });
         }
-        entries.push({ level: "warn", text: "URGENT: LOW_TREASURY_GAS" });
 
         if (!cancelled) setLogs(entries.slice(-6));
       } catch {
         if (!cancelled)
           setLogs([
             { level: "info", text: "RPC_UNREACHABLE" },
-            { level: "warn", text: "URGENT: LOW_TREASURY_GAS" },
           ]);
       }
     })();

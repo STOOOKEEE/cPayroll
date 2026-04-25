@@ -27,6 +27,11 @@ body {
   background: #404040;
 }
 
+*:focus-visible {
+  outline: 1px solid #E10600;
+  outline-offset: 2px;
+}
+
 @layer components {
   .label-mono {
     @apply text-[10px] uppercase tracking-wider2 text-dim;

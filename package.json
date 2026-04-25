@@ -11,8 +11,7 @@
     "contracts:test": "cd contracts && forge test -vvv",
     "deploy:sepolia": "cd contracts && forge script script/Deploy.s.sol --rpc-url $ARB_SEPOLIA_RPC --broadcast --verify",
     "gen-abi": "tsx scripts/gen-abi.ts",
-    "audit": "tsx scripts/chaingpt-audit.ts",
-    "chaingpt:audit": "tsx scripts/chaingpt-audit.ts"
+    "audit": "tsx scripts/chaingpt-audit.ts"
   },
   "dependencies": {
     "@iexec-nox/nox-confidential-contracts": "0.1.0-beta.2",

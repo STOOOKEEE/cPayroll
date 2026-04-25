@@ -54,7 +54,8 @@ export default function EmployeeView() {
       const value = await decryptBalance(walletClient, handleQuery.data as `0x${string}`);
       setDecrypted(value);
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
     } finally {
       setRevealing(false);
     }
@@ -94,7 +95,8 @@ export default function EmployeeView() {
       setUnwrapTx(hash);
       setUnwrapPhase("pending");
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
       setUnwrapPhase("idle");
     }
   }
@@ -152,8 +154,9 @@ export default function EmployeeView() {
         </p>
         <form onSubmit={onUnwrap} className="space-y-3">
           <div>
-            <label className="label-mono block mb-2">AMOUNT_USDC</label>
+            <label htmlFor="unwrap-amount" className="label-mono block mb-2">AMOUNT_USDC</label>
             <input
+              id="unwrap-amount"
               className="w-full bg-bg border border-border px-3 py-2 font-mono text-[12px] focus:outline-none focus:border-accent"
               value={unwrapAmount}
               onChange={(e) => setUnwrapAmount(e.target.value)}

@@ -72,7 +72,8 @@ export default function TeamPage() {
       setEmpAddr("");
       setReloadKey((k) => k + 1);
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
       setPhase("idle");
     }
   }
@@ -90,12 +91,13 @@ export default function TeamPage() {
         <Banner tone="info">CONNECT_WALLET_TO_ENABLE_ACTIONS</Banner>
       )}
 
-      <div className="grid grid-cols-3 gap-6">
-        <Card label="ADD_EMPLOYEE" className="col-span-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card label="ADD_EMPLOYEE" className="md:col-span-1">
           <form onSubmit={onAdd} className="space-y-4">
             <div>
-              <label className="label-mono block mb-2">ADDRESS</label>
+              <label htmlFor="emp-addr" className="label-mono block mb-2">ADDRESS</label>
               <input
+                id="emp-addr"
                 className="w-full bg-bg border border-border px-3 py-2 font-mono text-[12px] focus:outline-none focus:border-accent"
                 value={empAddr}
                 onChange={(e) => setEmpAddr(e.target.value)}
@@ -103,8 +105,9 @@ export default function TeamPage() {
               />
             </div>
             <div>
-              <label className="label-mono block mb-2">SALARY_USDC_MNTHLY</label>
+              <label htmlFor="emp-salary" className="label-mono block mb-2">SALARY_USDC_MNTHLY</label>
               <input
+                id="emp-salary"
                 className="w-full bg-bg border border-border px-3 py-2 font-mono text-[12px] focus:outline-none focus:border-accent"
                 value={salary}
                 onChange={(e) => setSalary(e.target.value)}
@@ -149,7 +152,7 @@ export default function TeamPage() {
           </form>
         </Card>
 
-        <div className="col-span-2">
+        <div className="md:col-span-2">
           <Card label="ACTIVE_PERSONNEL">
             <EmployeeTable key={reloadKey} showRemove />
           </Card>

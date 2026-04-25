@@ -12,7 +12,10 @@ import type { HandleClient } from "@iexec-nox/handle";
 const clientCache = new Map<string, Promise<HandleClient>>();
 
 export async function getHandleClient(wallet: WalletClient): Promise<HandleClient> {
-  const key = wallet.account?.address ?? "anonymous";
+  if (!wallet.account?.address) {
+    throw new Error("Wallet not connected — cannot create HandleClient without an address");
+  }
+  const key = wallet.account.address;
   let pending = clientCache.get(key);
   if (!pending) {
     pending = createViemHandleClient(wallet).catch((err) => {

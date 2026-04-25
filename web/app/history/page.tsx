@@ -9,6 +9,7 @@ import {
   arbiscanAddress,
   arbiscanTx,
   formatTimestamp,
+  formatUsdc,
   truncateAddress,
   truncateHandle,
 } from "@/lib/format";
@@ -101,7 +102,7 @@ export default function HistoryPage() {
           });
         for (const l of deposited) {
           const amt = l.args.underlyingAmount as bigint | undefined;
-          const usdc = amt ? `${(Number(amt) / 1_000_000).toFixed(2)} USDC` : "—";
+          const usdc = amt ? `${formatUsdc(amt)}` : "—";
           all.push({
             kind: "DEPOSITED",
             block: l.blockNumber,
@@ -139,7 +140,7 @@ export default function HistoryPage() {
             tx: l.transactionHash,
             summary:
               l.args.plaintextAmount !== undefined
-                ? `${(Number(l.args.plaintextAmount) / 1_000_000).toFixed(2)} USDC → ${l.args.receiver ? truncateAddress(l.args.receiver).toUpperCase() : "—"}`
+                ? `${formatUsdc(l.args.plaintextAmount as bigint)} → ${l.args.receiver ? truncateAddress(l.args.receiver).toUpperCase() : "—"}`
                 : "—",
           });
 
@@ -169,9 +170,10 @@ export default function HistoryPage() {
       </header>
 
       <Card label={`ENTRIES: ${entries.length}`}>
-        {loading && <p className="label-mono">&gt; FETCHING_LOGS…</p>}
+        {!deployed && <p className="label-mono">&gt; CONTRACTS_NOT_DEPLOYED</p>}
+        {loading && <p className="label-mono animate-pulse">&gt; FETCHING_LOGS…</p>}
         {err && <p className="label-mono text-accent break-all">! {err}</p>}
-        {!loading && entries.length === 0 && (
+        {deployed && !loading && entries.length === 0 && (
           <p className="label-mono">&gt; NO_EVENTS_IN_RANGE</p>
         )}
         <div className="space-y-1 font-mono text-[12px]">

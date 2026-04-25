@@ -58,22 +58,33 @@ export function EmployeeTable({
     let cancelled = false;
     (async () => {
       try {
-        const list: Row[] = [];
-        for (let i = 0n; i < count; i++) {
-          const addr = (await publicClient.readContract({
-            address: payroll,
-            abi: payrollAbi,
-            functionName: "employeeList",
-            args: [i],
-          })) as `0x${string}`;
-          const data = (await publicClient.readContract({
-            address: payroll,
-            abi: payrollAbi,
-            functionName: "employees",
-            args: [addr],
-          })) as readonly [boolean, `0x${string}`, bigint, bigint];
-          list.push({ addr, active: data[0], salaryHandle: data[1], lastPaid: data[2] });
-        }
+        const indices = Array.from({ length: Number(count) }, (_, i) => BigInt(i));
+        const addrs = await Promise.all(
+          indices.map((i) =>
+            publicClient.readContract({
+              address: payroll,
+              abi: payrollAbi,
+              functionName: "employeeList",
+              args: [i],
+            }) as Promise<`0x${string}`>
+          )
+        );
+        const details = await Promise.all(
+          addrs.map((addr) =>
+            publicClient.readContract({
+              address: payroll,
+              abi: payrollAbi,
+              functionName: "employees",
+              args: [addr],
+            }) as Promise<readonly [boolean, `0x${string}`, bigint, bigint]>
+          )
+        );
+        const list: Row[] = addrs.map((addr, i) => ({
+          addr,
+          active: details[i][0],
+          salaryHandle: details[i][1],
+          lastPaid: details[i][2],
+        }));
         if (!cancelled) setRows(list);
       } catch (e) {
         if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
@@ -85,6 +96,7 @@ export function EmployeeTable({
   }, [publicClient, deployed, count, reloadKey, payroll]);
 
   async function onRemove(addr: `0x${string}`) {
+    if (!confirm(`Remove employee ${addr.slice(0, 8)}…? This is irreversible.`)) return;
     setErr(null);
     try {
       await writeContractAsync({
