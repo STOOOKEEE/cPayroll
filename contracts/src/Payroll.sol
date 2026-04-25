@@ -216,6 +216,7 @@ contract Payroll is IPayroll {
     /// @notice Owner acknowledges that a prior `withdrawUnderlying` request
     ///         has finalized off-chain, re-enabling payroll operations.
     function clearWithdrawPending() external onlyOwner {
+        if (!withdrawPending) revert WithdrawPending();
         withdrawPending = false;
         emit WithdrawCleared(uint64(block.timestamp));
     }

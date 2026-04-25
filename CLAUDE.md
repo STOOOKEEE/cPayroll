@@ -78,25 +78,25 @@ Used at two levels:
 ```
 contracts/
 ├── Payroll.sol           # core payroll logic, owner-gated
+├── PayrollFactory.sol    # EIP-1167 clone factory
+├── CUSDC.sol             # ERC-7984 wrapper, scaffolded via cdefi-wizard
 ├── interfaces/
-│   ├── IERC7984.sol      # confidential token interface
+│   ├── IERC20Minimal.sol # minimal ERC-20 interface
 │   └── IPayroll.sol
-├── mocks/
-│   └── MockUSDC.sol      # test USDC for Arbitrum Sepolia (6 decimals)
-└── vendor/
-    └── cUSDC.sol         # ERC-7984 wrapper, scaffolded via cdefi-wizard
+└── mocks/
+    └── MockUSDC.sol      # test USDC for Arbitrum Sepolia (6 decimals)
 ```
 
 ### 3.2 `Payroll.sol` — state
 
 ```solidity
 address public owner;                         // employer
-IERC7984 public immutable cToken;             // cUSDC
-IERC20   public immutable underlying;         // USDC
+CUSDC   public cToken;                        // cUSDC
+IERC20  public underlying;                    // USDC
 
 struct Employee {
     bool    active;
-    euint64 salary;    // encrypted salary in cUSDC units
+    euint256 salary;   // encrypted salary in cUSDC units
     uint64  lastPaid;  // timestamp (public)
 }
 
@@ -109,12 +109,13 @@ address[] public employeeList;                // for iteration in payAll
 | Method | Caller | Effect |
 |---|---|---|
 | `deposit(uint256 amount)` | owner | pulls USDC, calls `cToken.wrap`, credits Payroll contract's confidential balance |
-| `addEmployee(address emp, einput encSalary, bytes proof)` | owner | registers employee with encrypted salary |
-| `updateSalary(address emp, einput encSalary, bytes proof)` | owner | rotates encrypted salary |
+| `addEmployee(address emp, externalEuint256 encSalary, bytes proof)` | owner | registers employee with encrypted salary |
+| `updateSalary(address emp, externalEuint256 encSalary, bytes proof)` | owner | rotates encrypted salary |
 | `removeEmployee(address emp)` | owner | deactivates |
 | `payOne(address emp)` | owner | `cToken.confidentialTransfer(emp, employees[emp].salary)` |
 | `payAll()` | owner | loops `employeeList`, calls `payOne` logic inline; updates `lastPaid` |
-| `withdrawUnderlying(uint256 amount)` | owner | emergency exit, unwraps cUSDC → USDC |
+| `withdrawUnderlying(externalEuint256 encAmount, bytes proof)` | owner | emergency exit, async unwrap cUSDC → USDC |
+| `clearWithdrawPending()` | owner | acknowledges finalized unwrap, re-enables payroll |
 
 Employees never call Payroll directly — they interact with cUSDC to view their balance and unwrap.
 
@@ -125,13 +126,17 @@ Events emit addresses and timestamps only. **Never** emit plaintext amounts. Enc
 event EmployeeAdded(address indexed emp);
 event EmployeeRemoved(address indexed emp);
 event Paid(address indexed emp, uint64 timestamp);
+event PayFailed(address indexed emp);
 event PayrollRun(uint64 timestamp, uint256 count);
 event Deposited(address indexed from, uint256 underlyingAmount);
+event WithdrawRequested(address indexed to, euint256 requestId);
+event WithdrawCleared(uint64 timestamp);
+event SalaryUpdated(address indexed emp);
 ```
 
 ### 3.5 Access control
 - `onlyOwner` modifier on all write paths
-- Ownership transferable (single-sig for v1, multisig-ready interface)
+- No `transferOwnership` in v1 — deliberate choice to keep attack surface minimal
 - No pause / no upgradeability in v1 — keep attack surface minimal
 
 ### 3.6 Gas / loop safety
@@ -144,9 +149,9 @@ event Deposited(address indexed from, uint256 underlyingAmount);
 ### 4.1 Stack
 - Next.js 14+ (App Router), TypeScript strict
 - wagmi v2 + viem + RainbowKit for wallet
-- `@iexec-nox/sdk` for client-side encryption/decryption
+- `@iexec-nox/handle` for client-side encryption/decryption
 - TanStack Query (via wagmi) for on-chain reads
-- Tailwind + shadcn/ui
+- Tailwind (custom UI components)
 - Zod for env + form validation
 - Foundry for contracts, `forge script` for deploys
 
@@ -154,13 +159,13 @@ event Deposited(address indexed from, uint256 underlyingAmount);
 
 ```
 app/
-├── page.tsx                  # landing + connect
-├── employer/
-│   ├── page.tsx              # dashboard: balance, employees, run payroll
-│   ├── deposit/page.tsx      # wrap USDC → cUSDC into Payroll
-│   └── employees/page.tsx    # CRUD employees with encrypted salaries
-├── employee/
-│   └── page.tsx              # self balance (decrypted client-side), history, unwrap
+├── page.tsx                  # dashboard: treasury, employees, run payroll
+├── team/page.tsx             # add/remove employees with encrypted salaries
+├── treasury/page.tsx         # deposit/wrap USDC → cUSDC, emergency withdraw, AI audit
+├── employee/page.tsx         # self balance (decrypted client-side), unwrap
+├── history/page.tsx          # on-chain event log viewer
+├── deploy/page.tsx           # factory clone deployer
+├── seed/page.tsx             # automated demo seeder pipeline
 └── api/
     └── chaingpt/
         └── audit/route.ts    # proxy to ChainGPT audit API (keeps key server-side)

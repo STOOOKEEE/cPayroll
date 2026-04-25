@@ -26,7 +26,7 @@ export function TreasuryCard() {
     value !== undefined ? formatUsdc(value).split(".") : ["—", "00"];
 
   return (
-    <Card label="TOTAL_BALANCE">
+    <Card label="USDC_PRE_WRAP">
       <div className="space-y-1">
         <div className="flex items-baseline gap-3">
           <div className="flex items-baseline leading-tight">
@@ -38,7 +38,7 @@ export function TreasuryCard() {
           <span className="label-mono">USDC</span>
         </div>
         <div className="text-[10px] text-accent tracking-wider2 uppercase pt-1">
-          + PUBLIC_LEDGER_BALANCE
+          UNWRAPPED_USDC_IN_CONTRACT
         </div>
       </div>
     </Card>

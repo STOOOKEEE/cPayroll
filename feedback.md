@@ -10,6 +10,8 @@ Docs at `docs.iex.ec` cover the high-level concepts well, but practical "first 5
 
 ## Nox SDK
 
+**Versions used:** `@iexec-nox/handle@0.1.0-beta.10`, `@iexec-nox/nox-protocol-contracts@0.1.0-beta.9`, `@iexec-nox/nox-confidential-contracts@0.1.0-beta.2`.
+
 `@iexec-nox/handle` provides a clean API for client-side encryption (`encryptInput`) and decryption (`decrypt`). The `createViemHandleClient` factory integrating directly with viem's `WalletClient` is well-designed and saved us from writing adapter boilerplate.
 
 Pain points:

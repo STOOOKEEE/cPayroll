@@ -207,7 +207,7 @@ async function onWithdraw(e: React.FormEvent) {
         </Banner>
       )}
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Card label="BALANCE_UNENCRYPTED">
           <div className="text-[28px] font-medium tabular-nums leading-tight">
             {treasuryUsdc.data !== undefined
@@ -227,7 +227,7 @@ async function onWithdraw(e: React.FormEvent) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Card label="DEPOSIT / WRAP_TO_CUSDC">
           <label htmlFor="deposit-amount" className="label-mono block mb-2">AMOUNT_USDC</label>
           <input

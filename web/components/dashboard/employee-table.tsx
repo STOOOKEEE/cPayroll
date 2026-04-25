@@ -38,6 +38,7 @@ export function EmployeeTable({
   const { address: payroll } = useActivePayroll();
   const { writeContractAsync, isPending } = useWriteContract();
   const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [err, setErr] = useState<string | null>(null);
 
@@ -56,6 +57,7 @@ export function EmployeeTable({
   useEffect(() => {
     if (!publicClient || !deployed) return;
     let cancelled = false;
+    setLoading(true);
     (async () => {
       try {
         const indices = Array.from({ length: Number(count) }, (_, i) => BigInt(i));
@@ -88,6 +90,8 @@ export function EmployeeTable({
         if (!cancelled) setRows(list);
       } catch (e) {
         if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -115,6 +119,9 @@ export function EmployeeTable({
 
   return (
     <div>
+      {loading && (
+        <p className="label-mono animate-pulse py-4">&gt; LOADING_PERSONNEL…</p>
+      )}
       <Table>
         <THead>
           <TR>

@@ -115,7 +115,7 @@ export default function SeedPage() {
         await wait(hash);
       });
 
-      // 4. Add 3 employees with encrypted salaries
+      // 3. Add 3 employees with encrypted salaries
       for (let i = 0; i < 3; i++) {
         const stepKey = `emp${i + 1}`;
         await runStep(stepKey, async () => {
@@ -141,7 +141,7 @@ export default function SeedPage() {
         });
       }
 
-      // 5. payAll — confidential transfer to each
+      // 4. payAll — confidential transfer to each
       await runStep("payall", async () => {
         const hash = await writeContractAsync({
           address: payroll,

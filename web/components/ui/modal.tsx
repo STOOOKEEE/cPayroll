@@ -10,39 +10,23 @@ export type ModalProps = {
 };
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handler);
+    const el = dialogRef.current;
+    if (!el) return;
+    if (open && !el.open) el.showModal();
+    if (!open && el.open) el.close();
+  }, [open]);
 
-    const prev = document.activeElement as HTMLElement | null;
-    dialogRef.current?.focus();
-
-    return () => {
-      document.removeEventListener("keydown", handler);
-      prev?.focus();
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      onClose={onClose}
+      className="backdrop:bg-black/70 bg-transparent p-4 max-w-2xl w-full m-auto"
       aria-labelledby="modal-title"
     >
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto border border-border bg-surface p-6 shadow-xl focus:outline-none"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="max-h-[85vh] overflow-y-auto border border-border bg-surface p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 id="modal-title" className="text-[13px] uppercase tracking-wider2 font-medium text-fg">
             {title}
@@ -57,7 +41,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         </div>
         {children}
       </div>
-    </div>
+    </dialog>
   );
 }
 

@@ -95,13 +95,10 @@ export default function DeployPage() {
       countQuery.refetch();
       myCountQuery.refetch();
     } catch (e) {
-      setErr(e instanceof Error ? e.message.toUpperCase() : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg.slice(0, 120).toUpperCase());
       setPhase("idle");
     }
-  }
-
-  function activate(addr: `0x${string}`) {
-    setActive(addr);
   }
 
   return (
@@ -224,7 +221,7 @@ export default function DeployPage() {
               </a>
             </div>
             <div className="flex gap-3">
-              <Button onClick={() => activate(newPayroll)}>
+              <Button onClick={() => setActive(newPayroll)}>
                 USE_THIS_PAYROLL
               </Button>
               <Link href={"/" as never}>

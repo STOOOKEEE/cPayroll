@@ -37,7 +37,7 @@ export default function HistoryPage() {
       setLoading(true);
       try {
         const latest = await publicClient.getBlockNumber();
-        const fromBlock = latest > 50000n ? latest - 50000n : 0n;
+        const fromBlock = latest > 10000n ? latest - 10000n : 0n;
 
         const [paid, added, removed, deposited, confidential, unwrapReq, unwrapFin] =
           await Promise.all([
@@ -165,7 +165,7 @@ export default function HistoryPage() {
           EVENT_LOG
         </h1>
         <p className="label-mono mt-1">
-          ON-CHAIN LEDGER • LAST 50K BLOCKS • NO AMOUNTS LEAKED
+          ON-CHAIN LEDGER • LAST 10K BLOCKS • NO AMOUNTS LEAKED
         </p>
       </header>
 

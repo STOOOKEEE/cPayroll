@@ -93,11 +93,11 @@ contract PayrollTest is Test {
         payroll.clearWithdrawPending();
     }
 
-    function test_clearWithdrawPending_ownerCallSucceeds() public {
+    function test_clearWithdrawPending_revertsWhenNotPending() public {
         assertEq(payroll.withdrawPending(), false);
         vm.prank(owner);
+        vm.expectRevert(Payroll.WithdrawPending.selector);
         payroll.clearWithdrawPending();
-        assertEq(payroll.withdrawPending(), false);
     }
 
     function test_removeUnknownReverts() public {
