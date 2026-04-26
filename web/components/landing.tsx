@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import type { Route } from "next";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 const FEATURES = [
@@ -31,6 +32,16 @@ const TECH = [
 
 export function Landing() {
   const { openConnectModal } = useConnectModal();
+  const { isConnected } = useAccount();
+  const router = useRouter();
+  const pendingRedirect = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (isConnected && pendingRedirect.current) {
+      router.push(pendingRedirect.current);
+      pendingRedirect.current = null;
+    }
+  }, [isConnected, router]);
 
   return (
     <div className="min-h-[calc(100vh-104px)] flex flex-col">
@@ -60,12 +71,15 @@ export function Landing() {
             >
               Connect Wallet
             </button>
-            <Link
-              href={"/employee" as Route}
+            <button
+              onClick={() => {
+                pendingRedirect.current = "/employee";
+                openConnectModal?.();
+              }}
               className="px-8 py-3 border border-border text-fg text-[12px] uppercase tracking-wider2 hover:border-fade transition"
             >
               I'm an Employee
-            </Link>
+            </button>
           </div>
 
           <p className="label-mono pt-2">
