@@ -1,8 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useRef } from "react";
-import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 const FEATURES = [
@@ -30,18 +27,8 @@ const TECH = [
   { label: "ChainGPT", desc: "AI contract audit" },
 ];
 
-export function Landing() {
+export function Landing({ onEmployeeConnect }: { onEmployeeConnect?: () => void }) {
   const { openConnectModal } = useConnectModal();
-  const { isConnected } = useAccount();
-  const router = useRouter();
-  const pendingRedirect = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (isConnected && pendingRedirect.current) {
-      router.push(pendingRedirect.current);
-      pendingRedirect.current = null;
-    }
-  }, [isConnected, router]);
 
   return (
     <div className="min-h-[calc(100vh-104px)] flex flex-col">
@@ -73,7 +60,7 @@ export function Landing() {
             </button>
             <button
               onClick={() => {
-                pendingRedirect.current = "/employee";
+                onEmployeeConnect?.();
                 openConnectModal?.();
               }}
               className="px-8 py-3 border border-border text-fg text-[12px] uppercase tracking-wider2 hover:border-fade transition"

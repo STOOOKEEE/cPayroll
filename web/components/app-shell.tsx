@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import type { Route } from "next";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAccount, useChainId } from "wagmi";
 import { ConnectButton } from "./connect-button";
 
@@ -83,6 +84,17 @@ function TabBar() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { isConnected } = useAccount();
+  const router = useRouter();
+  const wasConnected = useRef(false);
+
+  useEffect(() => {
+    if (wasConnected.current && !isConnected) {
+      router.push("/");
+    }
+    wasConnected.current = isConnected;
+  }, [isConnected, router]);
+
   return (
     <div className="min-h-screen bg-bg text-fg">
       <TopBar />

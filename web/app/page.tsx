@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import { TreasuryCard } from "@/components/dashboard/treasury-card";
 import { PayrollRunCard } from "@/components/dashboard/payroll-run-card";
@@ -10,8 +12,28 @@ import { Landing } from "@/components/landing";
 
 export default function HomePage() {
   const { isConnected } = useAccount();
+  const router = useRouter();
+  const pendingRedirect = useRef<string | null>(null);
+  const wasConnected = useRef(false);
 
-  if (!isConnected) return <Landing />;
+  useEffect(() => {
+    if (isConnected && pendingRedirect.current) {
+      const dest = pendingRedirect.current;
+      pendingRedirect.current = null;
+      router.push(dest);
+    }
+    wasConnected.current = isConnected;
+  }, [isConnected, router]);
+
+  if (!isConnected) {
+    return (
+      <Landing
+        onEmployeeConnect={() => {
+          pendingRedirect.current = "/employee";
+        }}
+      />
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[calc(100vh-104px)]">
